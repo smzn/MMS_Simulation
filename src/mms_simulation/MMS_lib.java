@@ -26,62 +26,57 @@ public class MMS_lib {
 		double elapse = 0;
 		double total_queue = 0; //延べ系内人数
 		int sum_queue = 0;
+		
+		arrival = this.getExponential(lambda); //次の到着までの時間
+		service[0] = arrival + this.getExponential(mu); //到着した客のサービス時間設定
+		
 		while(elapse < time) {
-			if( sum_queue == 0) { //システム内に客がいない、到着が発生
-				System.out.println("客0到着発生");
+			double mini_service = 100000; //最小のサービス時間
+			int mini_index = -1; //最小のサービス時間をもつノード
+			for(int i = 0; i < s; i++) {
+				if( queue[i] > 0) {
+					if( mini_service > service[i]) {
+						mini_service = service[i];
+						mini_index = i;
+					}
+				}
+			}
+			if( arrival < mini_service) { //到着が発生
 				total_queue += sum_queue * arrival;
-				sum_queue ++;
-				queue[0]++; //客はノード0に入るとする
+				sum_queue++;
 				elapse += arrival;
-				service[0] = this.getExponential(mu); //到着した客のサービス時間設定
+				for(int i = 0; i < s; i++) {
+					if( queue[i] > 0) service[i] -= arrival;
+				}
+				for(int i = 0; i < s; i++) { //到着した客のサービス時間を設定(どこかのノードが空の時)
+					if( queue[i] == 0) {
+						service[i] = this.getExponential(mu);
+						queue[i] ++;
+						break;
+					}
+				}
 				arrival = this.getExponential(lambda); //次の到着までの時間
 			}
-			else { //システム内に一人以上客がいる場合
-				System.out.println("客"+sum_queue);
-				double mini_service = 100000; //最小のサービス時間
-				int mini_index = -1; //最小のサービス時間をもつノード
+			else if( arrival >= mini_service ) { //退去が発生
+				total_queue += sum_queue * mini_service;
+				sum_queue --;
+				elapse += mini_service;
+				arrival -= mini_service;
 				for(int i = 0; i < s; i++) {
-					if( queue[i] > 0) {
-						if( mini_service > service[i]) {
-							mini_service = service[i];
-							mini_index = i;
-						}
-					}
+					if( queue[i] > 0) service[i] -= mini_service;
 				}
-				if( arrival < mini_service) { //サービス中の客はいるが、到着が発生
-					System.out.println("客"+sum_queue+"到着");
-					total_queue += sum_queue * arrival;
-					sum_queue++;
-					elapse += arrival;
-					for(int i = 0; i < s; i++) { //到着した客のサービス時間を設定(どこかのノードが空の時)
-						if( queue[i] == 0) {
-							service[i] = this.getExponential(mu);
-							queue[i] ++;
-							break;
-						}
-					}
-					elapse += arrival;
-					for(int i = 0; i < s; i++) {
-						if( queue[i] > 0) service[i] -= arrival;
-					}
-					arrival = this.getExponential(lambda); //次の到着までの時間
+				queue[mini_index] --;
+				if( sum_queue >= s) { //サービス時間を割り当てられていない客がいる場合
+					service[mini_index] = this.getExponential(mu);
+					queue[mini_index]++;
 				}
-				else if( arrival >= mini_service ) { //退去が発生
-					System.out.println("客"+sum_queue+"退去");
-					total_queue += sum_queue * mini_service;
-					sum_queue --;
-					elapse += mini_service;
-					for(int i = 0; i < s; i++) {
-						if( queue[i] > 0) service[i] -= mini_service;
-					}
-					queue[mini_index] --;
-					if( sum_queue >= s) { //サービス時間を割り当てられていない客がいる場合
-						service[mini_index] = this.getExponential(mu);
-						queue[mini_index]++;
-					}
+				else if( sum_queue == 0) {
+					service[0] = arrival + this.getExponential(mu); //到着した客のサービス時間設定
 				}
 			}
-			System.out.println("queue = "+Arrays.toString(queue));
+			//System.out.println("queue = "+Arrays.toString(queue));
+			//System.out.println("Arrival = "+arrival);
+			//System.out.println("service = "+Arrays.toString(service));
 		}
 		result[0] = total_queue / time;
 		return result; //イベントドリブン型
