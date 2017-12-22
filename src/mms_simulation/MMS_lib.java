@@ -1,15 +1,95 @@
 package mms_simulation;
 
+import java.util.Arrays;
+import java.util.Random;
+
 public class MMS_lib {
 	private double lambda, mu, rho;
 	private double q,l,w,u;
 	private int s;
-	public MMS_lib(double lambda, double mu, int s) {
-		super();
+	private int time;
+	Random rnd = new Random();
+	double result[] = new double[1]; 
+	
+	public MMS_lib(double lambda, double mu, int s, int time) {
 		this.lambda = lambda;
 		this.mu = mu;
 		this.s = s;
+		this.time = time;
 		this.rho = lambda / ( mu * s ) ;
+	}
+	
+	public double[] getSimulation() {
+		double arrival = this.getExponential(lambda);
+		double service[] = new double[s];
+		int queue[] = new int[s]; //サービス中を含むキューの長さ
+		double elapse = 0;
+		double total_queue = 0; //延べ系内人数
+		int sum_queue = 0;
+		while(elapse < time) {
+			if( sum_queue == 0) { //システム内に客がいない、到着が発生
+				System.out.println("客0到着発生");
+				total_queue += sum_queue * arrival;
+				sum_queue ++;
+				queue[0]++; //客はノード0に入るとする
+				elapse += arrival;
+				service[0] = this.getExponential(mu); //到着した客のサービス時間設定
+				arrival = this.getExponential(lambda); //次の到着までの時間
+			}
+			else { //システム内に一人以上客がいる場合
+				System.out.println("客"+sum_queue);
+				double mini_service = 100000; //最小のサービス時間
+				int mini_index = -1; //最小のサービス時間をもつノード
+				for(int i = 0; i < s; i++) {
+					if( queue[i] > 0) {
+						if( mini_service > service[i]) {
+							mini_service = service[i];
+							mini_index = i;
+						}
+					}
+				}
+				if( arrival < mini_service) { //サービス中の客はいるが、到着が発生
+					System.out.println("客"+sum_queue+"到着");
+					total_queue += sum_queue * arrival;
+					sum_queue++;
+					elapse += arrival;
+					for(int i = 0; i < s; i++) { //到着した客のサービス時間を設定(どこかのノードが空の時)
+						if( queue[i] == 0) {
+							service[i] = this.getExponential(mu);
+							queue[i] ++;
+							break;
+						}
+					}
+					elapse += arrival;
+					for(int i = 0; i < s; i++) {
+						if( queue[i] > 0) service[i] -= arrival;
+					}
+					arrival = this.getExponential(lambda); //次の到着までの時間
+				}
+				else if( arrival >= mini_service ) { //退去が発生
+					System.out.println("客"+sum_queue+"退去");
+					total_queue += sum_queue * mini_service;
+					sum_queue --;
+					elapse += mini_service;
+					for(int i = 0; i < s; i++) {
+						if( queue[i] > 0) service[i] -= mini_service;
+					}
+					queue[mini_index] --;
+					if( sum_queue >= s) { //サービス時間を割り当てられていない客がいる場合
+						service[mini_index] = this.getExponential(mu);
+						queue[mini_index]++;
+					}
+				}
+			}
+			System.out.println("queue = "+Arrays.toString(queue));
+		}
+		result[0] = total_queue / time;
+		return result; //イベントドリブン型
+	}
+	
+	//指数乱数発生
+	public double getExponential(double param) {
+		return - Math.log(1 - rnd.nextDouble()) / param;
 	}
 	
 	//nの階乗関数

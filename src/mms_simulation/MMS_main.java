@@ -1,5 +1,6 @@
 package mms_simulation;
 
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class MMS_main {
@@ -12,10 +13,13 @@ public class MMS_main {
 		double lambda = Double.parseDouble(scan.next());
 		System.out.print("Input mu > ");
 		double mu = Double.parseDouble(scan.next());
-		System.out.println("Input Number of Server > ");
+		System.out.print("Input Number of Server > ");
 		int s = Integer.parseInt(scan.next());
+		System.out.print("Input Time > ");
+		int time = Integer.parseInt(scan.next());
 
-		MMS_lib mms = new MMS_lib(lambda, mu, s);
+		MMS_lib mms = new MMS_lib(lambda, mu, s, time);
+		System.out.println("Simulation : (系内人数) = "+Arrays.toString(mms.getSimulation()));
 		mms.functionMMs();
 
 		System.out.println("");
