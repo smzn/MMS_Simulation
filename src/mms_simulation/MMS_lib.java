@@ -1,5 +1,6 @@
 package mms_simulation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -9,7 +10,10 @@ public class MMS_lib {
 	private int s;
 	private int time;
 	Random rnd = new Random();
-	double result[] = new double[1]; 
+	double result[] = new double[2]; 
+	ArrayList<Double> eventtime; 
+	ArrayList<String> event;
+	ArrayList<Integer> queuelength;
 	
 	public MMS_lib(double lambda, double mu, int s, int time) {
 		this.lambda = lambda;
@@ -17,6 +21,9 @@ public class MMS_lib {
 		this.s = s;
 		this.time = time;
 		this.rho = lambda / ( mu * s ) ;
+		eventtime = new ArrayList<Double>();
+		event = new ArrayList<String>();
+		queuelength = new ArrayList<Integer>();
 	}
 	
 	public double[] getSimulation() {
@@ -25,6 +32,7 @@ public class MMS_lib {
 		int queue[] = new int[s]; //サービス中を含むキューの長さ
 		double elapse = 0;
 		double total_queue = 0; //延べ系内人数
+		double total_queuelength = 0; //待ち人数
 		int sum_queue = 0;
 		
 		arrival = this.getExponential(lambda); //次の到着までの時間
@@ -43,8 +51,12 @@ public class MMS_lib {
 			}
 			if( arrival < mini_service) { //到着が発生
 				total_queue += sum_queue * arrival;
+				if( sum_queue > s ) total_queuelength += ( sum_queue - s ) * arrival; //待ち人数のみ、sum_queueがs以下の時は待ち人数無し
+				event.add("arrival");
+				queuelength.add(sum_queue);
 				sum_queue++;
 				elapse += arrival;
+				eventtime.add(elapse); //経過時間の登録はイベント後
 				for(int i = 0; i < s; i++) {
 					if( queue[i] > 0) service[i] -= arrival;
 				}
@@ -59,8 +71,12 @@ public class MMS_lib {
 			}
 			else if( arrival >= mini_service ) { //退去が発生
 				total_queue += sum_queue * mini_service;
+				if( sum_queue > s ) total_queuelength += ( sum_queue - s ) * mini_service;
+				event.add("departure");
+				queuelength.add(sum_queue);
 				sum_queue --;
 				elapse += mini_service;
+				eventtime.add(elapse); //経過時間の登録はイベント後
 				arrival -= mini_service;
 				for(int i = 0; i < s; i++) {
 					if( queue[i] > 0) service[i] -= mini_service;
@@ -79,6 +95,7 @@ public class MMS_lib {
 			//System.out.println("service = "+Arrays.toString(service));
 		}
 		result[0] = total_queue / time;
+		result[1] = total_queuelength / time;
 		return result; //イベントドリブン型
 	}
 	

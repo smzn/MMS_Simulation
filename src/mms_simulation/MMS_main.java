@@ -19,15 +19,15 @@ public class MMS_main {
 		int time = Integer.parseInt(scan.next());
 
 		MMS_lib mms = new MMS_lib(lambda, mu, s, time);
-		System.out.println("Simulation : (系内人数) = "+Arrays.toString(mms.getSimulation()));
+		System.out.println("Simulation : (系内人数, 待ち人数) = "+Arrays.toString(mms.getSimulation()));
 		mms.functionMMs();
 
 		System.out.println("");
 		System.out.println("rho利用率 =" + mms.getrho());
-		System.out.println("Q:待ち人数 =" + mms.getQ());
 		System.out.println("L:系内人数 =" + mms.getL());
-		System.out.println("W:待ち時間 =" + mms.getW());
+		System.out.println("Q:待ち人数 =" + mms.getQ());
 		System.out.println("U:系内時間 =" + mms.getU());
+		System.out.println("W:待ち時間 =" + mms.getW());
 	}
 
 }
